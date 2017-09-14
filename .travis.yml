@@ -11,7 +11,7 @@ env:
   - TESTCASE="1.8.4|avr|stable|arduino:avr:uno"
   - TESTCASE="1.8.4|avr|stable|arduino:avr:mega:cpu=atmega2560"
   - TESTCASE="1.8.4|avr|stable|arduino:avr:leonardo"
-  - TESTCASE="1.8.4|avr|stable|arduino:avr:esplora"
+  - TESTCASE="1.8.4|esplora|stable|arduino:avr:esplora"
   - TESTCASE="1.8.4|sam|stable|arduino:sam:arduino_due_x"
   - TESTCASE="1.8.4|samd|stable|arduino:samd:arduino_zero_edbg"
   - TESTCASE="1.8.4|samd|stable|arduino:samd:mkr1000"
@@ -101,60 +101,72 @@ script:
       arduino --verbose-build --verify --board ${BOARD} ESP8266sendMessage/ESP8266sendMessage.ino
       echo -e "travis_fold:end:ESP8266sendMessage"
     fi
-  - echo -e "travis_fold:start:OSCEsplora"
-  - arduino --verbose-build --verify --board ${BOARD} OSCEsplora/OSCEsplora.ino
-  - echo -e "travis_fold:end:OSCEsplora"
+  - |
+    if [ $PLATFORM == "esplora" ]
+    then
+      echo -e "travis_fold:start:OSCEsplora"
+      arduino --verbose-build --verify --board ${BOARD} OSCEsplora/OSCEsplora.ino
+      echo -e "travis_fold:end:OSCEsplora"
+    fi
   - echo -e "travis_fold:start:PatternMatching"
   - arduino --verbose-build --verify --board ${BOARD} PatternMatching/PatternMatching.ino
   - echo -e "travis_fold:end:PatternMatching"
-  - echo -e "travis_fold:start:SerialCallResponse"
-  - arduino --verbose-build --verify --board ${BOARD} SerialCallResponse/SerialCallResponse.ino
-  - echo -e "travis_fold:end:SerialCallResponse"
-  - echo -e "travis_fold:start:SerialEcho"
-  - arduino --verbose-build --verify --board ${BOARD} SerialEcho/SerialEcho.ino
-  - echo -e "travis_fold:end:SerialEcho"
-  - echo -e "travis_fold:start:SerialOscuinowithBundles"
-  - arduino --verbose-build --verify --board ${BOARD} SerialOscuinowithBundles/SerialOscuinowithBundles.ino
-  - echo -e "travis_fold:end:SerialOscuinowithBundles"
-  - echo -e "travis_fold:start:SerialOscuinowithMessages"
-  - arduino --verbose-build --verify --board ${BOARD} SerialOscuinowithMessages/SerialOscuinowithMessages.ino
-  - echo -e "travis_fold:end:SerialOscuinowithMessages"
-  - echo -e "travis_fold:start:SerialReceive"
-  - arduino --verbose-build --verify --board ${BOARD} SerialReceive/SerialReceive.ino
-  - echo -e "travis_fold:end:SerialReceive"
-  - echo -e "travis_fold:start:SerialReceivewithServo"
-  - arduino --verbose-build --verify --board ${BOARD} SerialReceivewithServo/SerialReceivewithServo.ino
-  - echo -e "travis_fold:end:SerialReceivewithServo"
-  - echo -e "travis_fold:start:SerialSendBundle"
-  - arduino --verbose-build --verify --board ${BOARD} SerialSendBundle/SerialSendBundle.ino
-  - echo -e "travis_fold:end:SerialSendBundle"
-  - echo -e "travis_fold:start:SerialSendBundleWithTimeTag"
-  - arduino --verbose-build --verify --board ${BOARD} SerialSendBundleWithTimeTag/SerialSendBundleWithTimeTag.ino
-  - echo -e "travis_fold:end:SerialSendBundleWithTimeTag"
-  - echo -e "travis_fold:start:SerialSendMessage"
-  - arduino --verbose-build --verify --board ${BOARD} SerialSendMessage/SerialSendMessage.ino
-  - echo -e "travis_fold:end:SerialSendMessage"
-  - echo -e "travis_fold:start:UDPCallResponse"
-  - arduino --verbose-build --verify --board ${BOARD} UDPCallResponse/UDPCallResponse.ino
-  - echo -e "travis_fold:end:UDPCallResponse"
-  - echo -e "travis_fold:start:UDPEcho"
-  - arduino --verbose-build --verify --board ${BOARD} UDPEcho/UDPEcho.ino
-  - echo -e "travis_fold:end:UDPEcho"
-  - echo -e "travis_fold:start:UDPOscuino"
-  - arduino --verbose-build --verify --board ${BOARD} UDPOscuino/UDPOscuino.ino
-  - echo -e "travis_fold:end:UDPOscuino"
-  - echo -e "travis_fold:start:UDPReceive"
-  - arduino --verbose-build --verify --board ${BOARD} UDPReceive/UDPReceive.ino
-  - echo -e "travis_fold:end:UDPReceive"
-  - echo -e "travis_fold:start:UDPSendBundle"
-  - arduino --verbose-build --verify --board ${BOARD} UDPSendBundle/UDPSendBundle.ino
-  - echo -e "travis_fold:end:UDPSendBundle"
-  - echo -e "travis_fold:start:UDPSendBundlewithTimeTag"
-  - arduino --verbose-build --verify --board ${BOARD} UDPSendBundlewithTimeTag/UDPSendBundlewithTimeTag.ino
-  - echo -e "travis_fold:end:UDPSendBundlewithTimeTag"
-  - echo -e "travis_fold:start:UDPSendMessage"
-  - arduino --verbose-build --verify --board ${BOARD} UDPSendMessage/UDPSendMessage.ino
-  - echo -e "travis_fold:end:UDPSendMessage"
+  - |
+    if [ $BOARD != "arduino:avr:uno" ]
+    then
+      echo -e "travis_fold:start:SerialCallResponse"
+      arduino --verbose-build --verify --board ${BOARD} SerialCallResponse/SerialCallResponse.ino
+      echo -e "travis_fold:end:SerialCallResponse"
+      echo -e "travis_fold:start:SerialEcho"
+      arduino --verbose-build --verify --board ${BOARD} SerialEcho/SerialEcho.ino
+      echo -e "travis_fold:end:SerialEcho"
+      echo -e "travis_fold:start:SerialOscuinowithBundles"
+      arduino --verbose-build --verify --board ${BOARD} SerialOscuinowithBundles/SerialOscuinowithBundles.ino
+      echo -e "travis_fold:end:SerialOscuinowithBundles"
+      echo -e "travis_fold:start:SerialOscuinowithMessages"
+      arduino --verbose-build --verify --board ${BOARD} SerialOscuinowithMessages/SerialOscuinowithMessages.ino
+      echo -e "travis_fold:end:SerialOscuinowithMessages"
+      echo -e "travis_fold:start:SerialReceive"
+      arduino --verbose-build --verify --board ${BOARD} SerialReceive/SerialReceive.ino
+      echo -e "travis_fold:end:SerialReceive"
+      echo -e "travis_fold:start:SerialReceivewithServo"
+      arduino --verbose-build --verify --board ${BOARD} SerialReceivewithServo/SerialReceivewithServo.ino
+      echo -e "travis_fold:end:SerialReceivewithServo"
+      echo -e "travis_fold:start:SerialSendBundle"
+      arduino --verbose-build --verify --board ${BOARD} SerialSendBundle/SerialSendBundle.ino
+      echo -e "travis_fold:end:SerialSendBundle"
+      echo -e "travis_fold:start:SerialSendBundleWithTimeTag"
+      arduino --verbose-build --verify --board ${BOARD} SerialSendBundleWithTimeTag/SerialSendBundleWithTimeTag.ino
+      echo -e "travis_fold:end:SerialSendBundleWithTimeTag"
+      echo -e "travis_fold:start:SerialSendMessage"
+      arduino --verbose-build --verify --board ${BOARD} SerialSendMessage/SerialSendMessage.ino
+      echo -e "travis_fold:end:SerialSendMessage"
+    fi
+  - |
+    if [ $PLATFORM != "esp8266" -a $PLATFORM != "esp32" ]
+    then
+      echo -e "travis_fold:start:UDPCallResponse"
+      arduino --verbose-build --verify --board ${BOARD} UDPCallResponse/UDPCallResponse.ino
+      echo -e "travis_fold:end:UDPCallResponse"
+      echo -e "travis_fold:start:UDPEcho"
+      arduino --verbose-build --verify --board ${BOARD} UDPEcho/UDPEcho.ino
+      echo -e "travis_fold:end:UDPEcho"
+      echo -e "travis_fold:start:UDPOscuino"
+      arduino --verbose-build --verify --board ${BOARD} UDPOscuino/UDPOscuino.ino
+      echo -e "travis_fold:end:UDPOscuino"
+      echo -e "travis_fold:start:UDPReceive"
+      arduino --verbose-build --verify --board ${BOARD} UDPReceive/UDPReceive.ino
+      echo -e "travis_fold:end:UDPReceive"
+      echo -e "travis_fold:start:UDPSendBundle"
+      arduino --verbose-build --verify --board ${BOARD} UDPSendBundle/UDPSendBundle.ino
+      echo -e "travis_fold:end:UDPSendBundle"
+      echo -e "travis_fold:start:UDPSendBundlewithTimeTag"
+      arduino --verbose-build --verify --board ${BOARD} UDPSendBundlewithTimeTag/UDPSendBundlewithTimeTag.ino
+      echo -e "travis_fold:end:UDPSendBundlewithTimeTag"
+      echo -e "travis_fold:start:UDPSendMessage"
+      arduino --verbose-build --verify --board ${BOARD} UDPSendMessage/UDPSendMessage.ino
+      echo -e "travis_fold:end:UDPSendMessage"
+    fi
 
 notifications:
   email:
