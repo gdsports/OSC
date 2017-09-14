@@ -1,0 +1,162 @@
+sudo: false
+
+language: python
+python:
+  - "2.7"
+
+os:
+  - linux
+
+env:
+  - TESTCASE="1.8.4|avr|stable|arduino:avr:uno"
+  - TESTCASE="1.8.4|avr|stable|arduino:avr:mega:cpu=atmega2560"
+  - TESTCASE="1.8.4|avr|stable|arduino:avr:leonardo"
+  - TESTCASE="1.8.4|avr|stable|arduino:avr:esplora"
+  - TESTCASE="1.8.4|sam|stable|arduino:sam:arduino_due_x"
+  - TESTCASE="1.8.4|samd|stable|arduino:samd:arduino_zero_edbg"
+  - TESTCASE="1.8.4|samd|stable|arduino:samd:mkr1000"
+  - TESTCASE="1.8.4|samd|stable|arduino:samd:mkrzero"
+  - TESTCASE="1.8.4|samd|stable|arduino:samd:mkrfox1200"
+  - TESTCASE="1.8.4|esp8266|stable|esp8266:esp8266:nodemcuv2:CpuFrequency=80,FlashSize=4M3M"
+  - TESTCASE="1.8.4|esp8266|devel|esp8266com:esp8266:nodemcuv2:CpuFrequency=80,FlashSize=4M3M"
+  - TESTCASE="1.8.4|esp32|devel|espressif:esp32:esp32:FlashFreq=80"
+
+script:
+  - echo -e "travis_fold:start:sketch_test_env_prepare"
+  - pip install pyserial
+  - IFS='|' read -r -a array <<< "${TESTCASE}"
+  - |
+    for index in "${!array[@]}"
+    do
+      case $index in
+        0) IDEVER="${array[index]}" ;;
+        1) PLATFORM="${array[index]}" ;;
+        2) RELEASE="${array[index]}" ;;
+        3) BOARD="${array[index]}" ;;
+      esac
+    done
+  - cd $HOME
+  - wget -O arduino.tar.xz https://downloads.arduino.cc/arduino-${IDEVER}-linux64.tar.xz
+  - tar xf arduino.tar.xz
+  - mv arduino-${IDEVER} $HOME/arduino_ide
+  - IDEDIR="${HOME}/arduino_ide"
+  - LIBDIR="${IDEDIR}/portable/sketchbook/libraries"
+  - mkdir -p "${LIBDIR}"
+  - export PATH="$IDEDIR:$PATH"
+  - cd ${IDEDIR}
+  - which arduino
+  - arduino --install-library "Ethernet"
+  - |
+    if [ $PLATFORM == "sam" -a $RELEASE == "stable" ]
+    then
+      arduino --install-boards "arduino:sam"
+    fi
+  - |
+    if [ $PLATFORM == "samd" -a $RELEASE == "stable" ]
+    then
+      arduino --install-boards "arduino:samd"
+    fi
+  - |
+    if [ $PLATFORM == "esp8266" -a $RELEASE == "stable" ]
+    then
+      arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json" --save-prefs
+      arduino --install-boards "esp8266:esp8266"
+    fi
+  - |
+    if [ $PLATFORM == "esp8266" -a $RELEASE == "devel" ]
+    then
+      mkdir -p hardware/esp8266com
+      cd hardware/esp8266com
+      git clone https://github.com/esp8266/Arduino.git esp8266
+      cd esp8266/tools
+      python get.py
+    fi
+  - |
+    if [ $PLATFORM == "esp32" -a $RELEASE == "devel" ]
+    then
+      mkdir -p hardware/espressif
+      cd hardware/espressif
+      git clone https://github.com/espressif/arduino-esp32.git esp32
+      cd esp32/tools/
+      python get.py
+    fi
+  - arduino --pref "compiler.warning_level=default" --save-prefs
+  - echo -e "travis_fold:end:sketch_test_env_prepare"
+  - echo -e "travis_fold:start:install_library"
+  - cd "${LIBDIR}"
+  - git clone https://github.com/CNMAT/OSC
+  - git clone https://github.com/Seeed-Studio/Ethernet_Shield_W5200
+  - echo -e "travis_fold:end:install_library"
+  - cd OSC/examples
+  - |
+    if [ $PLATFORM == "esp8266" -o $PLATFORM == "esp32" ]
+    then
+      echo -e "travis_fold:start:ESP8266ReceiveBundle"
+      arduino --verbose-build --verify --board ${BOARD} ESP8266ReceiveBundle/ESP8266ReceiveBundle.ino
+      echo -e "travis_fold:end:ESP8266ReceiveBundle"
+      echo -e "travis_fold:start:ESP8266ReceiveMessage"
+      arduino --verbose-build --verify --board ${BOARD} ESP8266ReceiveMessage/ESP8266ReceiveMessage.ino
+      echo -e "travis_fold:end:ESP8266ReceiveMessage"
+      echo -e "travis_fold:start:ESP8266sendMessage"
+      arduino --verbose-build --verify --board ${BOARD} ESP8266sendMessage/ESP8266sendMessage.ino
+      echo -e "travis_fold:end:ESP8266sendMessage"
+    fi
+  - echo -e "travis_fold:start:OSCEsplora"
+  - arduino --verbose-build --verify --board ${BOARD} OSCEsplora/OSCEsplora.ino
+  - echo -e "travis_fold:end:OSCEsplora"
+  - echo -e "travis_fold:start:PatternMatching"
+  - arduino --verbose-build --verify --board ${BOARD} PatternMatching/PatternMatching.ino
+  - echo -e "travis_fold:end:PatternMatching"
+  - echo -e "travis_fold:start:SerialCallResponse"
+  - arduino --verbose-build --verify --board ${BOARD} SerialCallResponse/SerialCallResponse.ino
+  - echo -e "travis_fold:end:SerialCallResponse"
+  - echo -e "travis_fold:start:SerialEcho"
+  - arduino --verbose-build --verify --board ${BOARD} SerialEcho/SerialEcho.ino
+  - echo -e "travis_fold:end:SerialEcho"
+  - echo -e "travis_fold:start:SerialOscuinowithBundles"
+  - arduino --verbose-build --verify --board ${BOARD} SerialOscuinowithBundles/SerialOscuinowithBundles.ino
+  - echo -e "travis_fold:end:SerialOscuinowithBundles"
+  - echo -e "travis_fold:start:SerialOscuinowithMessages"
+  - arduino --verbose-build --verify --board ${BOARD} SerialOscuinowithMessages/SerialOscuinowithMessages.ino
+  - echo -e "travis_fold:end:SerialOscuinowithMessages"
+  - echo -e "travis_fold:start:SerialReceive"
+  - arduino --verbose-build --verify --board ${BOARD} SerialReceive/SerialReceive.ino
+  - echo -e "travis_fold:end:SerialReceive"
+  - echo -e "travis_fold:start:SerialReceivewithServo"
+  - arduino --verbose-build --verify --board ${BOARD} SerialReceivewithServo/SerialReceivewithServo.ino
+  - echo -e "travis_fold:end:SerialReceivewithServo"
+  - echo -e "travis_fold:start:SerialSendBundle"
+  - arduino --verbose-build --verify --board ${BOARD} SerialSendBundle/SerialSendBundle.ino
+  - echo -e "travis_fold:end:SerialSendBundle"
+  - echo -e "travis_fold:start:SerialSendBundleWithTimeTag"
+  - arduino --verbose-build --verify --board ${BOARD} SerialSendBundleWithTimeTag/SerialSendBundleWithTimeTag.ino
+  - echo -e "travis_fold:end:SerialSendBundleWithTimeTag"
+  - echo -e "travis_fold:start:SerialSendMessage"
+  - arduino --verbose-build --verify --board ${BOARD} SerialSendMessage/SerialSendMessage.ino
+  - echo -e "travis_fold:end:SerialSendMessage"
+  - echo -e "travis_fold:start:UDPCallResponse"
+  - arduino --verbose-build --verify --board ${BOARD} UDPCallResponse/UDPCallResponse.ino
+  - echo -e "travis_fold:end:UDPCallResponse"
+  - echo -e "travis_fold:start:UDPEcho"
+  - arduino --verbose-build --verify --board ${BOARD} UDPEcho/UDPEcho.ino
+  - echo -e "travis_fold:end:UDPEcho"
+  - echo -e "travis_fold:start:UDPOscuino"
+  - arduino --verbose-build --verify --board ${BOARD} UDPOscuino/UDPOscuino.ino
+  - echo -e "travis_fold:end:UDPOscuino"
+  - echo -e "travis_fold:start:UDPReceive"
+  - arduino --verbose-build --verify --board ${BOARD} UDPReceive/UDPReceive.ino
+  - echo -e "travis_fold:end:UDPReceive"
+  - echo -e "travis_fold:start:UDPSendBundle"
+  - arduino --verbose-build --verify --board ${BOARD} UDPSendBundle/UDPSendBundle.ino
+  - echo -e "travis_fold:end:UDPSendBundle"
+  - echo -e "travis_fold:start:UDPSendBundlewithTimeTag"
+  - arduino --verbose-build --verify --board ${BOARD} UDPSendBundlewithTimeTag/UDPSendBundlewithTimeTag.ino
+  - echo -e "travis_fold:end:UDPSendBundlewithTimeTag"
+  - echo -e "travis_fold:start:UDPSendMessage"
+  - arduino --verbose-build --verify --board ${BOARD} UDPSendMessage/UDPSendMessage.ino
+  - echo -e "travis_fold:end:UDPSendMessage"
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change    
